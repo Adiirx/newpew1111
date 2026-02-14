@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blow the Candle</title>
+
+<style>
+:root { --candle-color:#f9f9e0; }
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:'Courier New', monospace;
+    overflow:hidden;
+    background:radial-gradient(circle at 70% 20%, #1a2a6c, #0f2027 70%);
+    color:white;
+}
+
+/* Stars */
+#stars{
+    position:fixed;
+    width:100%;
+    height:100%;
+    z-index:0;
+}
+.star{
+    position:absolute;
+    width:2px;
+    height:2px;
+    background:white;
+    border-radius:50%;
+    animation:twinkle 2s infinite alternate;
+}
+@keyframes twinkle{
+    from{opacity:.3}
+    to{opacity:1}
+}
+
+/* Shooting Star */
+.shooting-star{
+    position:absolute;
+    width:120px;
+    height:2px;
+    background:linear-gradient(to right, white, transparent);
+    top:25%;
+    left:-150px;
+    transform:rotate(25deg);
+    animation:shoot 1.2s linear forwards;
+}
+@keyframes shoot{
+    to{left:120%;top:45%;opacity:0}
+}
+
+/* Main */
+#game-container{
+    text-align:center;
+    z-index:2;
+    padding:20px;
+    width:100%;
+    transition:opacity .8s ease;
+}
+
+h2{
+    font-weight:normal;
+    letter-spacing:2px;
+}
+
+.subtext{
+    font-size:13px;
+    color:#ccc;
+    margin-bottom:30px;
+}
+
+/* Candle */
+.candle-wrapper{
+    position:relative;
+    width:90px;
+    height:200px;
+    margin:0 auto 35px;
+}
+.candle-body{
+    width:55px;
+    height:150px;
+    background:var(--candle-color);
+    position:absolute;
+    bottom:0;
+    left:18px;
+    border-radius:6px;
+}
+.wick{
+    width:4px;
+    height:15px;
+    background:#444;
+    position:absolute;
+    top:25px;
+    left:43px;
+}
+.flame{
+    width:26px;
+    height:42px;
+    background:radial-gradient(circle at 50% 30%, #fff5b1,#ff9d00);
+    border-radius:50% 50% 35% 35%;
+    position:absolute;
+    top:-15px;
+    left:32px;
+    box-shadow:0 0 25px #ff9d00,0 0 50px yellow;
+    animation:flicker .1s infinite alternate;
+}
+@keyframes flicker{
+    0%{transform:scale(1) rotate(-1deg)}
+    100%{transform:scale(1.08) rotate(1deg)}
+}
+
+/* Button */
+#blow-button{
+    background:rgba(255,255,255,.12);
+    color:white;
+    border:1px solid rgba(255,255,255,.4);
+    padding:16px 32px;
+    font-size:16px;
+    border-radius:40px;
+    width:80%;
+    max-width:300px;
+}
+
+/* Final Screen */
+#final-screen{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:black;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+    text-align:center;
+    z-index:5;
+}
+#typing-text{
+    font-size:18px;
+    line-height:1.7;
+    white-space:pre-wrap;
+}
+
+.hidden{display:none!important}
+</style>
+</head>
+
+<body>
+
+<div id="stars"></div>
+
+<div id="game-container">
+    <h2>BLOW The candle</h2>
+    <p class="subtext">Make a quiet wish before it's gone.</p>
+
+    <div class="candle-wrapper">
+        <div class="flame" id="candle-flame"></div>
+        <div class="wick"></div>
+        <div class="candle-body"></div>
+    </div>
+
+    <button id="blow-button">
+        TAP TO BLOW ( <span id="click-count">0</span>/10 )
+    </button>
+</div>
+
+<div id="final-screen">
+    <div id="typing-text"></div>
+</div>
+
+<!-- 🎹 Piano Music -->
+<audio id="bg-music" preload="auto" loop>
+<source src="https://raw.githubusercontent.com/Adiirx/my-website-images/main/%5BRoyalty_Free_Music%5D_Dreaming_-_Inspiring_Uplifting_Piano_320k.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+/* Create Stars */
+const starsContainer=document.getElementById("stars");
+for(let i=0;i<80;i++){
+    const s=document.createElement("div");
+    s.classList.add("star");
+    s.style.top=Math.random()*100+"vh";
+    s.style.left=Math.random()*100+"vw";
+    s.style.animationDuration=(1+Math.random()*2)+"s";
+    starsContainer.appendChild(s);
+}
+
+let clicks=0;
+const goal=10;
+
+const btn=document.getElementById("blow-button");
+const countSpan=document.getElementById("click-count");
+const flame=document.getElementById("candle-flame");
+const gameContainer=document.getElementById("game-container");
+const finalScreen=document.getElementById("final-screen");
+const typingElement=document.getElementById("typing-text");
+const music=document.getElementById("bg-music");
+
+const message=
+"Maybe you're not my Valentine…\n\n"+
+"but if I had to choose someone to smile for today,\n"+
+"it would still be you.";
+
+/* Start music on first tap */
+btn.addEventListener("click",()=>{
+
+    if(clicks===0){
+        music.volume=0;
+        music.play().catch(()=>{});
+        let fade=setInterval(()=>{
+            if(music.volume<0.35){
+                music.volume+=0.02;
+            }else{
+                clearInterval(fade);
+            }
+        },200);
+    }
+
+    clicks++;
+    countSpan.innerText=clicks;
+
+    let scale=1-(clicks/15);
+    flame.style.transform=`scale(${scale})`;
+
+    if(clicks>=goal) finish();
+});
+
+function finish(){
+    flame.classList.add("hidden");
+
+    setTimeout(()=>{
+        gameContainer.style.opacity="0";
+
+        setTimeout(()=>{
+            gameContainer.classList.add("hidden");
+            finalScreen.style.display="flex";
+
+            createShootingStar();
+
+            setTimeout(()=>{
+                typeWriter(message,0);
+            },3500);
+
+        },600);
+
+    },300);
+}
+
+function typeWriter(text,i){
+    if(i<text.length){
+        typingElement.textContent+=text.charAt(i);
+        let speed=text.charAt(i)==="\n"?600:80;
+        setTimeout(()=>typeWriter(text,i+1),speed);
+    }
+}
+
+function createShootingStar(){
+    const star=document.createElement("div");
+    star.classList.add("shooting-star");
+    document.body.appendChild(star);
+    setTimeout(()=>star.remove(),1200);
+}
+
+</script>
+
+</body>
+</html>
